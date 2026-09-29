@@ -61,8 +61,6 @@ circle(Point(5, 6), 7)
 Circle(Point(5, 6))
 Circle(Point(5, 6), 7, 8)
 
-   
-	
 Point(1e3, 2)
 Point(1.5e-3, 2.5)
 Point(inf, 5)
