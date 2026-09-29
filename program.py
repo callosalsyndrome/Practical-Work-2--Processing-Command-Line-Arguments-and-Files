@@ -1,7 +1,9 @@
 import re
 import sys
 import os
+import argparse
 from typing import List, Tuple, Union
+
 
 class Point:
     def __init__(self, x: float, y: float):
@@ -92,10 +94,6 @@ def load_objects(filename: str) -> Tuple[List, List[str]]:
                     objects.append(obj)
                 else:
                     bad_lines.append(stripped)
-                    continue
-                    
-                    # print(f"Некорректная строка пропущена: {stripped}",
-                    #       file=sys.stderr)
     except FileNotFoundError:
         print(f"Файл '{filename}' не найден", file=sys.stderr)
         sys.exit(1)
@@ -112,10 +110,10 @@ def report_errors(bad_lines: List[str], log_path: str = "log.txt"):
         with open(log_path, "a", encoding="utf-8") as log:
             for line in bad_lines:
                 log.write(line + "\n")
-        print(f"Ошибки добавлены в существующий {log_path}",
-              file=sys.stderr)
+        print(f"Ошибки добавлены в существующий {log_path}", file=sys.stderr)
     else:
-        print("Лог-файл не найден. Ошибки выводятся на экран, создаётся новый log.txt", file=sys.stderr)
+        print("Лог-файл не найден. Ошибки выводятся на экран, "
+              "создаётся новый лог-файл", file=sys.stderr)
         for line in bad_lines:
             print(line)
         with open(log_path, "w", encoding="utf-8") as log:
@@ -123,27 +121,44 @@ def report_errors(bad_lines: List[str], log_path: str = "log.txt"):
                 log.write(line + "\n")
         print(f"Создан новый {log_path}", file=sys.stderr)
 
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="program.py",
+        description="Обработка файла с объектами Point/Line/Circle.",
+    )
+    parser.add_argument(
+        "-f", "--file",
+        required=True,
+        help="путь к файлу с данными",
+    )
+    parser.add_argument(
+        "-o", "--oper",
+        required=True,
+        choices=["print", "count", "log"],
+        help="операция: print | count | log",
+    )
+    parser.add_argument(
+        "--log",
+        default="log.txt",
+        help="путь к лог-файлу (по умолчанию: log.txt)",
+    )
+    return parser
+
+
 def main():
-    if len(sys.argv) < 3:
-        print("python program.py <файл> <операция>")
-        print("Операции: print, count, log")
-        sys.exit(1)
+    parser = build_parser()
+    args = parser.parse_args()
 
-    filename = sys.argv[1]
-    operation = sys.argv[2].lower()
+    objects, bad_lines = load_objects(args.file)
 
-    objects, bad_lines = load_objects(filename)
-
-    if operation == "--print":
+    if args.oper == "print":
         print_objects(objects)
-    elif operation == "--count":
+    elif args.oper == "count":
         print(len(objects))
-    elif operation == "--log":
-        log_path = "log.txt"
-        report_errors(bad_lines, log_path)
+    elif args.oper == "log":
+        report_errors(bad_lines, args.log)
     else:
-        print(f"Неизвестная операция: {operation}", file=sys.stderr)
-        print("Доступные операции: --print, --count, --log", file=sys.stderr)
-        sys.exit(1)
-        
+        parser.error(f"Неизвестная операция: {args.oper}")
+
 main()
